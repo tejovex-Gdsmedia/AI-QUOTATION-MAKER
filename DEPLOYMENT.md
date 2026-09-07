@@ -63,10 +63,13 @@ graph TD
    | `SUPABASE_SERVICE_ROLE_KEY` | **No** (Server Only) | Your Supabase Service Role Secret Key (for Admin deletion endpoint) |
    | `FLASK_SECRET_KEY` | **No** (Server Only) | 64-char random hex string generated with `python -c "import secrets; print(secrets.token_hex(32))"` |
    | `FLASK_DEBUG` | **No** (Server Only) | `False` |
+   | `FRONTEND_URL` | **No** (Server Only) | Your production Vercel domain (e.g. `https://<your-project-name>.vercel.app` or custom domain). If not known prior to first deploy, add it in Project Settings → Environment Variables after initial deployment. |
 
 4. **Click Deploy:**
    - Click **Deploy**. Vercel will install dependencies from [requirements.txt](file:///c:/Users/hp/OneDrive/Desktop/ai%20quotation%20maker/requirements.txt), compile the React 19 frontend bundle, and deploy the serverless Python API.
    - Once deployment succeeds, Vercel will provide your live production domain (e.g., `https://ai-quotation-maker.vercel.app`).
+   - If you did not add `FRONTEND_URL` during initial import, go to **Settings → Environment Variables** in your Vercel project, add `FRONTEND_URL=https://<your-project-name>.vercel.app`, and click **Redeploy**.
+
 
 ---
 
