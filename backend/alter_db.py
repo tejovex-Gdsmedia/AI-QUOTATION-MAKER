@@ -27,4 +27,7 @@ try:
             print(f"- {col[0]}: {col[1]}")
     conn.close()
 except Exception as e:
-    print(f"Error: {e}")
+    import re
+    safe_err = re.sub(r'postgresql://[^@]+@', 'postgresql://***@', str(e))
+    safe_err = re.sub(r'password=\S+', 'password=***', safe_err)
+    print(f"Database error: {safe_err}")

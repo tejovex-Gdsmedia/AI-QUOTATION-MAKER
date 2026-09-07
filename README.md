@@ -77,23 +77,26 @@ cp frontend/.env.example frontend/.env
 
 | Variable | Location | Notes |
 |---|---|---|
-| `FLASK_SECRET_KEY` | `backend/.env` | Generate with `python -c "import secrets; print(secrets.token_hex(32))"` |
+| `FLASK_SECRET_KEY` | `backend/.env` | Server-side only. Generate with `python -c "import secrets; print(secrets.token_hex(32))"` |
 | `GEMINI_API_KEY` | `backend/.env` | Server-side only. Get from [Google AI Studio](https://aistudio.google.com/app/apikey). Leave blank for mock fallback. |
 | `DATABASE_URL` | `backend/.env` | Server-side only. Full Supabase PostgreSQL connection string including password. |
+| `SUPABASE_URL` | `backend/.env` | Server-side only. Used for Supabase Admin user deletion API. |
+| `SUPABASE_SERVICE_ROLE_KEY` | `backend/.env` | Server-side only. Never expose to frontend. |
+| `FRONTEND_URL` | `backend/.env` | Server-side only. Allowed CORS origin (e.g. `https://your-frontend.vercel.app`). |
 | `VITE_SUPABASE_URL` | `frontend/.env` | Safe to expose client-side (public project URL). |
-| `VITE_SUPABASE_ANON_KEY` | `frontend/.env` | Safe client-side **only because RLS is enforced on every table**. This is a publishable key — not the service role key. |
+| `VITE_SUPABASE_ANON_KEY` | `frontend/.env` | Safe client-side **only because RLS is enforced on every table**. This is a publishable key — never put the service role key here. |
+| `VITE_API_URL` | `frontend/.env` | Public backend API endpoint URL. |
 
-### ⚠ IMPORTANT: Rotate Your Database Password
+### ⚠ CRITICAL: Rotate All Secrets Before Production
 
-If you previously had a real `DATABASE_URL` with credentials stored in `backend/.env`, **rotate your Supabase database password immediately**:
+If any sensitive credentials or passwords were previously used or stored locally during development, **rotate them immediately before production deployment**:
 
-1. Go to **Supabase Dashboard → Project Settings → Database**
-2. Click **Reset database password**
-3. Update `DATABASE_URL` in your local `backend/.env` with the new password
-4. Redeploy your backend service with the updated environment variable
+1. **Supabase Database Password**: In Supabase Dashboard → Project Settings → Database → Reset database password.
+2. **Supabase Service Role Key**: If ever shared or exposed, roll it in Project Settings → API.
+3. **Google Gemini API Key**: In [Google AI Studio](https://aistudio.google.com/app/apikey), generate a new restricted key if needed.
+4. **Flask Secret Key**: Generate a new 256-bit entropy token using `secrets.token_hex(32)`.
 
-> Even if `.env` was never committed to git, rotating credentials that were ever stored in a plaintext file is best practice before any deployment.
+### Row Level Security (RLS) Confirmation
 
-### RLS Confirmation
+Row Level Security (RLS) is enabled on all tables (`company_settings`, `clients`, `quotations`, `quotation_versions`, `activities`) and Supabase Storage bucket (`quotations`). Every policy strictly isolates records by `auth.uid()`. The Supabase service role key is strictly confined to server-side admin endpoints and is never referenced or exposed in frontend code.
 
-Row Level Security is enabled on all tables (`company_settings`, `clients`, `quotations`, `quotation_versions`, `activities`). Every policy isolates records by `auth.uid()`. The Supabase service role key is **not used anywhere in this codebase** and must never be added to frontend code.

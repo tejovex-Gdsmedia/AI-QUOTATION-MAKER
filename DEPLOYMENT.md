@@ -41,8 +41,11 @@ Deploy the Flask API backend. Render is recommended for quick deployment.
    - Navigate to the **Environment** tab in Render Web Service and add:
      - `DATABASE_URL`: *Your Supabase PostgreSQL URI (from Step 1.4)*
      - `GEMINI_API_KEY`: *Your Google Gemini API Key*
-     - `FLASK_SECRET_KEY`: *Generate a long random secure string*
+     - `FLASK_SECRET_KEY`: *Generate a secure random string: `python -c "import secrets; print(secrets.token_hex(32))"`*
      - `FLASK_DEBUG`: `False`
+     - `FRONTEND_URL`: *Your Vercel frontend URL (e.g., `https://ai-quotation-maker.vercel.app`)*
+     - `SUPABASE_URL`: *Your Supabase Project URL (e.g., `https://your-project.supabase.co`)*
+     - `SUPABASE_SERVICE_ROLE_KEY`: *Your Supabase Service Role Key (Keep server-side only)*
      - `PORT`: `5000`
 4. **Deploy:**
    - Click **Deploy Web Service** and wait for the build to pass.
