@@ -38,7 +38,7 @@ const DEFAULT_COMPANY_SETTINGS = {
 export default function QuotationForm() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const isEditMode = !!id;
 
   const [loading, setLoading] = useState(true);
@@ -234,8 +234,12 @@ export default function QuotationForm() {
 
       const response = await fetch(`${apiBaseUrl}/generate-proposal`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+        },
         body: JSON.stringify({
+
           company_settings: companySettings,
           client_details: {
             name: clientName.trim(),
@@ -437,12 +441,16 @@ export default function QuotationForm() {
 
       const response = await fetch(`${apiBaseUrl}/generate-pdf`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+        },
         body: JSON.stringify({
           proposal_data: proposalData,
           company_settings: companySettings
         })
       });
+
 
       if (!response.ok) {
         const errJson = await response.json();
@@ -537,12 +545,16 @@ export default function QuotationForm() {
 
         const pdfResponse = await fetch(`${apiBaseUrl}/generate-pdf`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+          },
           body: JSON.stringify({
             proposal_data: activeData,
             company_settings: companySettings
           })
         });
+
 
         if (!pdfResponse.ok) {
           const errJson = await pdfResponse.json().catch(() => ({}));

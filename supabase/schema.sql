@@ -89,12 +89,37 @@ alter table quotations enable row level security;
 alter table quotation_versions enable row level security;
 alter table activities enable row level security;
 
--- Setup simple RLS policies (Users can read and write only their own records)
-create policy "CS user isolation" on company_settings for all using (auth.uid() = user_id);
-create policy "Clients user isolation" on clients for all using (auth.uid() = user_id);
-create policy "Quotations user isolation" on quotations for all using (auth.uid() = user_id);
-create policy "QV user isolation" on quotation_versions for all using (auth.uid() = created_by);
-create policy "Activities user isolation" on activities for all using (auth.uid() = user_id);
+-- Setup granular Row Level Security (RLS) policies (Users can read and write only their own records)
+-- Company Settings
+create policy "CS user isolation select" on company_settings for select using (auth.uid() = user_id);
+create policy "CS user isolation insert" on company_settings for insert with check (auth.uid() = user_id);
+create policy "CS user isolation update" on company_settings for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "CS user isolation delete" on company_settings for delete using (auth.uid() = user_id);
+
+-- Clients
+create policy "Clients user isolation select" on clients for select using (auth.uid() = user_id);
+create policy "Clients user isolation insert" on clients for insert with check (auth.uid() = user_id);
+create policy "Clients user isolation update" on clients for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Clients user isolation delete" on clients for delete using (auth.uid() = user_id);
+
+-- Quotations
+create policy "Quotations user isolation select" on quotations for select using (auth.uid() = user_id);
+create policy "Quotations user isolation insert" on quotations for insert with check (auth.uid() = user_id);
+create policy "Quotations user isolation update" on quotations for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Quotations user isolation delete" on quotations for delete using (auth.uid() = user_id);
+
+-- Quotation Versions
+create policy "QV user isolation select" on quotation_versions for select using (auth.uid() = created_by);
+create policy "QV user isolation insert" on quotation_versions for insert with check (auth.uid() = created_by);
+create policy "QV user isolation update" on quotation_versions for update using (auth.uid() = created_by) with check (auth.uid() = created_by);
+create policy "QV user isolation delete" on quotation_versions for delete using (auth.uid() = created_by);
+
+-- Activities
+create policy "Activities user isolation select" on activities for select using (auth.uid() = user_id);
+create policy "Activities user isolation insert" on activities for insert with check (auth.uid() = user_id);
+create policy "Activities user isolation update" on activities for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "Activities user isolation delete" on activities for delete using (auth.uid() = user_id);
+
 
 -- 6. Supabase Storage — Quotation PDFs
 -- Run this AFTER enabling the Storage extension in your Supabase project.

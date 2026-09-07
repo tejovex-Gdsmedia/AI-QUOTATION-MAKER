@@ -1,9 +1,25 @@
 import io
+import html
+import re
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
+
+def _esc(val):
+    if val is None:
+        return ""
+    return html.escape(str(val))
+
+def _safe_hex(hex_str, default="#2563eb"):
+    if not isinstance(hex_str, str):
+        return default
+    cleaned = hex_str.strip()
+    if re.match(r'^#[0-9a-fA-F]{6}$', cleaned) or re.match(r'^#[0-9a-fA-F]{3}$', cleaned):
+        return cleaned
+    return default
+
 
 class NumberedCanvas(canvas.Canvas):
     def __init__(self, *args, **kwargs):
@@ -95,10 +111,10 @@ class PDFService:
         company_phone = profile.get("phone", "")
         company_website = profile.get("website", "")
         
-        # Color palettes
+        # Color palettes with safe hex parsing
         brand_colors = profile.get("brandColors", {}) or {}
-        primary_hex = brand_colors.get("primary", "#2563eb")
-        secondary_hex = brand_colors.get("secondary", "#0f172a")
+        primary_hex = _safe_hex(brand_colors.get("primary"), "#2563eb")
+        secondary_hex = _safe_hex(brand_colors.get("secondary"), "#0f172a")
         
         primary_color = colors.HexColor(primary_hex)
         secondary_color = colors.HexColor(secondary_hex)
@@ -140,17 +156,20 @@ class PDFService:
         why_us = proposal_data.get("whyUs", "")
         cta = proposal_data.get("cta", "")
         
-        # 1. Minimal Header
+        # 1. Minimal Header (escaped)
+        display_brand = _esc(brand_name.upper() if brand_name else company_name.upper())
         header_left_html = (
-            f"<font size=15 color='{primary_hex}'><b>{brand_name.upper() if brand_name else company_name.upper()}</b></font><br/>"
+            f"<font size=15 color='{primary_hex}'><b>{display_brand}</b></font><br/>"
         )
         if brand_name:
-            header_left_html += f"<font size=8.5 color='#64748b'>Powered by {company_name}</font>"
+            header_left_html += f"<font size=8.5 color='#64748b'>Powered by {_esc(company_name)}</font>"
             
         contact_lines = []
-        if company_email: contact_lines.append(f"Email: {company_email}")
-        if company_phone: contact_lines.append(f"Phone: {company_phone}")
-        if company_website: contact_lines.append(f"Web: {company_website.replace('https://','').replace('http://','')}")
+        if company_email: contact_lines.append(f"Email: {_esc(company_email)}")
+        if company_phone: contact_lines.append(f"Phone: {_esc(company_phone)}")
+        if company_website:
+            clean_web = _esc(company_website.replace('https://','').replace('http://',''))
+            contact_lines.append(f"Web: {clean_web}")
         
         header_right_html = "<br/>".join([f"<font size=8 color='#475569'>{line}</font>" for line in contact_lines])
         
@@ -168,7 +187,7 @@ class PDFService:
 
         # 2. Section 1: About Our Company
         story.append(Paragraph("About Our Company", h1_style))
-        story.append(Paragraph(about_company, body_style))
+        story.append(Paragraph(_esc(about_company), body_style))
         story.append(Spacer(1, 4))
 
         # 3. Section 2: Client Details & Requirement (Restated)
@@ -179,20 +198,20 @@ class PDFService:
         client_phone = proposal_data.get("phone", "")
         
         client_lines = [
-            f"<b>Client Representative:</b> {client_name}",
-            f"<b>Company Name:</b> {client_company}",
-            f"<b>Industry Vertical:</b> {client_industry}"
+            f"<b>Client Representative:</b> {_esc(client_name)}",
+            f"<b>Company Name:</b> {_esc(client_company)}",
+            f"<b>Industry Vertical:</b> {_esc(client_industry)}"
         ]
         if client_email:
-            client_lines.append(f"<b>Email:</b> {client_email}")
+            client_lines.append(f"<b>Email:</b> {_esc(client_email)}")
         if client_phone:
-            client_lines.append(f"<b>Phone:</b> {client_phone}")
+            client_lines.append(f"<b>Phone:</b> {_esc(client_phone)}")
             
         client_html = "<br/>".join(client_lines)
         
         req_html = (
             f"<b>Quoted Need:</b><br/>"
-            f"{understanding}"
+            f"{_esc(understanding)}"
         )
         
         client_table = Table(
@@ -212,12 +231,12 @@ class PDFService:
 
         # 4. Section 3: Our Proposed Solution
         story.append(Paragraph("Our Proposed Solution", h1_style))
-        story.append(Paragraph(solution, body_style))
+        story.append(Paragraph(_esc(solution), body_style))
         story.append(Spacer(1, 4))
 
         # 5. Section 4 & 5: Services Included & Benefits (Side by side)
-        services_html = "<b>Services Included:</b><br/>" + "<br/>".join([f"• {s}" for s in services])
-        benefits_html = "<b>Business Benefits:</b><br/>" + "<br/>".join([f"• {b}" for b in benefits])
+        services_html = "<b>Services Included:</b><br/>" + "<br/>".join([f"• {_esc(s)}" for s in services])
+        benefits_html = "<b>Business Benefits:</b><br/>" + "<br/>".join([f"• {_esc(b)}" for b in benefits])
         
         sb_table = Table(
             [[Paragraph(services_html, body_style), Paragraph(benefits_html, body_style)]],
@@ -248,9 +267,9 @@ class PDFService:
             price = pkg.get("price") or "Contact Sales"
             desc = pkg.get("description") or "Implementation scoped details"
             pricing_data.append([
-                Paragraph(f"<b>{name}</b>", body_style),
-                Paragraph(f"<b>{price}</b>", body_style),
-                Paragraph(desc, body_style)
+                Paragraph(f"<b>{_esc(name)}</b>", body_style),
+                Paragraph(f"<b>{_esc(price)}</b>", body_style),
+                Paragraph(_esc(desc), body_style)
             ])
         
         pricing_table = Table(pricing_data, colWidths=[150, 140, 250])
@@ -274,9 +293,9 @@ class PDFService:
         # 7. Section 7 & 8: Why Choose Us & Call To Action
         why_cta_html = (
             f"<b>Why Choose Us?</b><br/>"
-            f"{why_us}<br/><br/>"
+            f"{_esc(why_us)}<br/><br/>"
             f"<font size=9.5 color='{primary_hex}'><b>Next Step / Call to Action:</b></font><br/>"
-            f"<b>{cta}</b>"
+            f"<b>{_esc(cta)}</b>"
         )
         
         why_cta_table = Table([[Paragraph(why_cta_html, body_style)]], colWidths=[540])
@@ -302,3 +321,4 @@ class PDFService:
         
         buffer.seek(0)
         return buffer.getvalue()
+
