@@ -56,7 +56,8 @@ Copy the PostgreSQL commands inside [supabase/schema.sql](file:///c:/Users/hp/On
 
 ## 🌍 Production Deployments
 
-For complete walkthrough instructions on migrating schemas, hosting the React client on **Vercel**, and deploying the Flask API service on **Render**, refer to the [DEPLOYMENT.md](file:///c:/Users/hp/OneDrive/Desktop/ai%20quotation%20maker/DEPLOYMENT.md) playbook.
+For complete walkthrough instructions on deploying the full-stack application (React 19 Frontend + Python Serverless API) directly to **Vercel**, refer to the [DEPLOYMENT.md](file:///c:/Users/hp/OneDrive/Desktop/ai%20quotation%20maker/DEPLOYMENT.md) playbook.
+
 
 ---
 

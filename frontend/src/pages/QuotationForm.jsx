@@ -230,7 +230,7 @@ export default function QuotationForm() {
     setMessage({ type: '', text: '' });
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 
       const response = await fetch(`${apiBaseUrl}/generate-proposal`, {
         method: 'POST',
@@ -437,7 +437,7 @@ export default function QuotationForm() {
   const handleTriggerPDFExport = async () => {
     if (!proposalData) return;
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 
       const response = await fetch(`${apiBaseUrl}/generate-pdf`, {
         method: 'POST',
@@ -541,7 +541,7 @@ export default function QuotationForm() {
     const upload = (async () => {
       setUploadingPdf(true);
       try {
-        const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
 
         const pdfResponse = await fetch(`${apiBaseUrl}/generate-pdf`, {
           method: 'POST',

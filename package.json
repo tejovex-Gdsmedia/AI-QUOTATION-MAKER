@@ -1,0 +1,9 @@
+{
+  "name": "ai-quotation-maker",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "lint": "cd frontend && npm run lint"
+  }
+}

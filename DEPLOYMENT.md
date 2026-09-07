@@ -1,76 +1,80 @@
-# Production Deployment Playbook
+# Vercel Production Deployment Playbook
 
-This document provides step-by-step instructions for deploying the AI Proposal & Quotation SaaS Platform to production environments.
-
----
-
-## 1. Database Setup (Supabase)
-
-1. **Create Project:**
-   - Sign up/log in to [Supabase](https://supabase.com).
-   - Click **New Project** and name it (e.g., `ai-quotation-maker`). Keep note of your database password.
-2. **Execute Database Migrations:**
-   - Open the **SQL Editor** tab from your project dashboard.
-   - Copy the SQL statements from [supabase/schema.sql](file:///c:/Users/hp/OneDrive/Desktop/ai%20quotation%20maker/supabase/schema.sql) and paste them into the editor.
-   - Run the query. It will create the database tables (`company_settings`, `clients`, `quotations`, `quotation_versions`, `activities`), generate indexes, and activate Row Level Security (RLS) policies.
-3. **Verify API Credentials:**
-   - Navigate to **Project Settings -> API**.
-   - Copy the **Project URL** and the **anon public key**. Save these for frontend configuration.
-4. **Copy Database Connection String:**
-   - Navigate to **Project Settings -> Database**.
-   - Under **Connection string**, click **URI** and copy it (e.g., `postgresql://postgres.[project-id]:[password]@aws-1-[region].pooler.supabase.com:6543/postgres`). Remember to replace `[password]` with your database password. Save this for backend configuration.
+This document provides complete, step-by-step instructions for deploying the **AI Quotation Maker SaaS Platform** directly to **Vercel** as a unified single-project deployment (React 19 / Vite SPA Frontend + Python Serverless Flask Backend API).
 
 ---
 
-## 2. Backend Deployment (Render / Heroku)
+## Architecture on Vercel
 
-Deploy the Flask API backend. Render is recommended for quick deployment.
+```mermaid
+graph TD
+    User([User Browser]) -->|HTTPS| VercelRouter[Vercel Global Edge Network]
+    VercelRouter -->|SPA Routes /dashboard, /quotations, etc.| StaticFrontend[React / Vite Static Dist]
+    VercelRouter -->|API Routes /api/*| PythonServerless[Vercel Serverless Function: api/index.py]
+    PythonServerless -->|Google Gemini API| GeminiAI[Google AI Studio]
+    PythonServerless -->|PostgreSQL TLS / Port 6543| SupabaseDB[(Supabase PostgreSQL)]
+    StaticFrontend -->|Auth & Direct RLS Queries| SupabaseAuth[Supabase Auth & Storage]
+```
 
-1. **Prepare GitHub Repository:**
-   - Commit the codebase to a private/public GitHub repository.
-2. **Create Web Service on Render:**
-   - Log in to [Render](https://render.com).
-   - Click **New +** and select **Web Service**.
-   - Connect your GitHub repository.
-   - Set the following configurations:
-     - **Name:** `ai-proposal-backend`
-     - **Runtime:** `Python`
-     - **Build Command:** `pip install -r requirements.txt` (or if using Render Python environment, it executes automatically)
-     - **Start Command:** `gunicorn app:app` (ensure `gunicorn` is added to python dependencies if running in production)
-3. **Configure Environment Variables:**
-   - Navigate to the **Environment** tab in Render Web Service and add:
-     - `DATABASE_URL`: *Your Supabase PostgreSQL URI (from Step 1.4)*
-     - `GEMINI_API_KEY`: *Your Google Gemini API Key*
-     - `FLASK_SECRET_KEY`: *Generate a secure random string: `python -c "import secrets; print(secrets.token_hex(32))"`*
-     - `FLASK_DEBUG`: `False`
-     - `FRONTEND_URL`: *Your Vercel frontend URL (e.g., `https://ai-quotation-maker.vercel.app`)*
-     - `SUPABASE_URL`: *Your Supabase Project URL (e.g., `https://your-project.supabase.co`)*
-     - `SUPABASE_SERVICE_ROLE_KEY`: *Your Supabase Service Role Key (Keep server-side only)*
-     - `PORT`: `5000`
-4. **Deploy:**
-   - Click **Deploy Web Service** and wait for the build to pass.
-   - Copy the service URL (e.g., `https://ai-proposal-backend.onrender.com`).
+- **Single Domain / Same-Origin**: Both frontend SPA and backend API endpoints are served from the same Vercel production URL (e.g., `https://your-project.vercel.app`), completely eliminating cross-origin CORS latency and issues.
+- **Routing**: [vercel.json](file:///c:/Users/hp/OneDrive/Desktop/ai%20quotation%20maker/vercel.json) routes `/api/*` to the Python Serverless function `api/index.py` and all other web paths to `index.html` for client-side routing (`react-router-dom`).
 
 ---
 
-## 3. Frontend Deployment (Vercel)
+## 1. Prerequisites: Supabase Database Setup
 
-Deploy the single-page React-Vite application.
+1. **Create Supabase Project:**
+   - Log in to [Supabase](https://supabase.com) and click **New Project**.
+   - Note your database password and project region.
+2. **Run SQL Schema Migration:**
+   - Go to **SQL Editor** in your Supabase dashboard.
+   - Copy the entire SQL content from [supabase/schema.sql](file:///c:/Users/hp/OneDrive/Desktop/ai%20quotation%20maker/supabase/schema.sql) and paste it into the editor.
+   - Click **Run**. This creates all tables (`company_settings`, `clients`, `quotations`, `quotation_versions`, `activities`), indexes, and enables Row Level Security (RLS) policies.
+3. **Collect API & Connection Keys:**
+   - Go to **Project Settings → API**:
+     - `Project URL` (e.g., `https://xxxx.supabase.co`)
+     - `anon / public` key
+     - `service_role` secret key (Keep secret!)
+   - Go to **Project Settings → Database → Connection string → URI**:
+     - Copy the **Session / Transaction Pooler (port 6543)** URI (e.g., `postgresql://postgres.[project-id]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`).
 
-1. **Connect Project to Vercel:**
-   - Log in to [Vercel](https://vercel.com).
-   - Click **Add New -> Project**.
-   - Import your GitHub repository.
-2. **Configure Root Directory and Framework Presets:**
-   - Select the root folder or set the **Root Directory** to `frontend`.
-   - Vercel automatically detects **Vite** as the framework template and sets:
-     - **Build Command:** `npm run build`
-     - **Output Directory:** `dist`
-3. **Configure Environment Variables:**
-   - Expand the **Environment Variables** section and input:
-     - `VITE_SUPABASE_URL`: *Your Supabase Project URL*
-     - `VITE_SUPABASE_ANON_KEY`: *Your Supabase Anon Key*
-     - `VITE_API_URL`: `https://your-backend-render-domain.onrender.com/api` *(The URL copied from Step 2.4)*
-4. **Deploy:**
-   - Click **Deploy**.
-   - Once deployment completes, Vercel will assign a production domain name (e.g., `https://ai-quotation-maker.vercel.app`).
+---
+
+## 2. Deploy to Vercel (Step-by-Step UI Guide)
+
+1. **Import Repository in Vercel:**
+   - Go to your [Vercel Dashboard](https://vercel.com/dashboard).
+   - Click **Add New...** → **Project**.
+   - Select the GitHub repository: `https://github.com/tejovex-Gdsmedia/AI-QUOTATION-MAKER.git` (or search for `AI-QUOTATION-MAKER`).
+2. **Configure Project Settings:**
+   - **Framework Preset**: Leave as **Other** (or Vite).
+   - **Root Directory**: `./` (leave at root — [vercel.json](file:///c:/Users/hp/OneDrive/Desktop/ai%20quotation%20maker/vercel.json) handles building the frontend from `frontend/` and mapping the Python API automatically).
+   - **Build & Development Settings**: Keep defaults (overridden automatically by `vercel.json`).
+3. **Configure Environment Variables in Vercel:**
+   In the **Environment Variables** section, add the following keys for **Production, Preview, and Development**:
+
+   | Variable Name | Safe for Client? | Value / Description |
+   | :--- | :---: | :--- |
+   | `VITE_SUPABASE_URL` | **Yes** (Client) | Your Supabase Project URL (`https://your-project.supabase.co`) |
+   | `VITE_SUPABASE_ANON_KEY` | **Yes** (Client) | Your Supabase Anon Public Key (RLS-protected) |
+   | `DATABASE_URL` | **No** (Server Only) | Supabase PostgreSQL Connection URI (Pooler port 6543) |
+   | `GEMINI_API_KEY` | **No** (Server Only) | Google AI Studio API Key from [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+   | `SUPABASE_URL` | **No** (Server Only) | Your Supabase Project URL (`https://your-project.supabase.co`) |
+   | `SUPABASE_SERVICE_ROLE_KEY` | **No** (Server Only) | Your Supabase Service Role Secret Key (for Admin deletion endpoint) |
+   | `FLASK_SECRET_KEY` | **No** (Server Only) | 64-char random hex string generated with `python -c "import secrets; print(secrets.token_hex(32))"` |
+   | `FLASK_DEBUG` | **No** (Server Only) | `False` |
+
+4. **Click Deploy:**
+   - Click **Deploy**. Vercel will install dependencies from [requirements.txt](file:///c:/Users/hp/OneDrive/Desktop/ai%20quotation%20maker/requirements.txt), compile the React 19 frontend bundle, and deploy the serverless Python API.
+   - Once deployment succeeds, Vercel will provide your live production domain (e.g., `https://ai-quotation-maker.vercel.app`).
+
+---
+
+## 3. Post-Deployment Verification Checklist
+
+- [ ] Visit `https://<your-app>.vercel.app/` — homepage/auth loads with sleek modern styling.
+- [ ] Visit `https://<your-app>.vercel.app/api/health` — returns `{"status":"healthy","service":"AI Proposal API","database":"connected"}`.
+- [ ] Sign up / Sign in with Supabase Auth.
+- [ ] Fill out Company Profile in Settings and save.
+- [ ] Generate an AI Proposal on `/quotations/new` — verify Gemini AI generation and ReportLab PDF export function properly.
+- [ ] Verify Row Level Security — data created by one user is never visible to another.
