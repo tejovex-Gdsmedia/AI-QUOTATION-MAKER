@@ -48,3 +48,6 @@ Thumbs.db
 .idea/
 *.suo
 *.sw?
+
+.vercel
+.env*
