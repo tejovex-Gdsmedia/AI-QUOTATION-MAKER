@@ -1,5 +1,4 @@
 {
-  "version": 2,
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "rewrites": [
@@ -8,7 +7,7 @@
       "destination": "/api/index.py"
     },
     {
-      "source": "/((?!assets/|.*\\..*).*)",
+      "source": "/:path((?!api/|assets/|favicon\\.svg|icons\\.svg|robots\\.txt|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]
