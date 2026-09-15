@@ -6,7 +6,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 // Import Pages
 import Auth from './pages/Auth';
-import Dashboard from './pages/Dashboard';
+import DashboardPage from './pages/DashboardPage';
 import Clients from './pages/Clients';
 import Settings from './pages/Settings';
 import QuotationForm from './pages/QuotationForm';
@@ -257,8 +257,8 @@ export default function App() {
             <Route path="/auth" element={<Auth />} />
 
             {/* Protected SaaS App Routes */}
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/quotation/new" element={<ProtectedRoute><QuotationForm /></ProtectedRoute>} />
             <Route path="/quotation/:id" element={<ProtectedRoute><QuotationForm /></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
