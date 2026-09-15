@@ -49,16 +49,18 @@ app.config["SECRET_KEY"] = _secret_key or "dev-only-not-for-production"
 app.config["DEBUG"] = _debug_mode
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2MB max request payload
 
-# CORS: restrict strictly to configured frontend domain — never allow wildcard in production
+# CORS: allow local development origins and configured frontend URL
 _frontend_url = os.environ.get("FRONTEND_URL", "").rstrip("/")
-if _frontend_url:
-    _cors_origins = [_frontend_url]
-elif _debug_mode:
-    _cors_origins = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"]
-else:
-    _cors_origins = []
+_cors_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+if _frontend_url and _frontend_url not in _cors_origins:
+    _cors_origins.append(_frontend_url)
 
-CORS(app, resources={r"/api/*": {"origins": _cors_origins}})
+CORS(app, resources={r"/api/*": {"origins": _cors_origins, "methods": ["GET", "POST", "OPTIONS"], "allow_headers": ["Content-Type", "Authorization"]}})
 
 # Rate limiting — per-IP; uses Redis when REDIS_URL is configured
 _redis_url = os.environ.get("REDIS_URL")
